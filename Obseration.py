@@ -13,8 +13,10 @@ class Observer:
     def __init__(self, api_key_alpaca:str,
                        api_secret_alpaca:str,
                        news_limit:int = 30,
+                       price_limit:int = 50,
                        interval_prices:str = '1h',
-                       training:bool = True):
+                       training:bool = True,
+                       use_neutral:bool = False):
         
         supported = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo']
         if interval_prices not in supported:
@@ -25,9 +27,11 @@ class Observer:
         self.rest = GetNews(api_key_alpaca, api_secret_alpaca)
 
         self.news_limit = news_limit
+        self.price_limit = price_limit
         self.interval_prices = interval_prices
 
         self.training = training
+        self.neutral = use_neutral
 
     
     def get_news_obs(self, symbol:str, date:datetime):
@@ -78,6 +82,30 @@ class Observer:
     def __call__(self, symbol:str, date:datetime):
 
         news_part = self.get_news_obs(symbol, date)
+        prices_part = self.client.get_num_prices(symbol, date, self.price_limit, self.interval_prices)
 
+        if self.training:
 
-        # TODO: continue with the price and label part
+            now = self.client.get_next_price(symbol, date, self.interval_prices)['open'][-1]
+            past = prices_part['open'][-1]
+
+            if now > past:
+
+                label_part = np.array([[1]])
+
+            elif now < past or not self.neutral:
+                label_part = np.array([[0]])
+
+            else:
+                label_part = np.array([[2]])
+
+            return {
+                'news': news_part,
+                'prices': prices_part,
+                'label': label_part
+            }
+        
+        return {
+                'news': news_part,
+                'prices': prices_part
+        }

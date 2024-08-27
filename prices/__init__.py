@@ -28,13 +28,13 @@ class PricesClient:
         """
         A function to get the last market price before the "date" parameter
         with the "precision" parameter to set the precision/last price round date 
-        of the output
+        of the output.
 
         Inputs: \n
 
         symbol = a market symbol, ex: "AAPL" \n
         date = a datetime object to set the date of the first price \n
-        precision = a string set to "number+[h, m, d, M] (hours, minutes, days, months) \n
+        precision = a string set to "number+[h, m, d, M]" (hours, minutes, days, months) \n
 
         Output: \n
 
@@ -241,3 +241,43 @@ class PricesClient:
             return df_new
         
         return df
+    
+    def get_next_price(self, symbol:str, date:datetime, precision:str = '1h'):
+
+        """
+        A function to get the first market price after the "date" parameter
+        with the "precision" parameter to set the precision/first price round date 
+        of the output.
+
+        Inputs: \n
+
+        symbol = a market symbol, ex: "AAPL" \n
+        date = a datetime object to set the date of the first price \n
+        precision = a string set to "number+[h, m, d, M]" (hours, minutes, days, months) \n
+
+        Output: \n
+
+        A dataset pandas \n
+
+        The dataset is structured like this: \n
+
+        Index = "timestamp" -> pandas.TimeStamp \n
+        Data = ["open", "high", "low", "close", "volume", "trade_count", "vwap"] ->  float64 \n
+        """
+
+        if precision[-1] == 'h':
+            delta = timedelta(hours=int(precision[:-1]))
+        
+        elif precision[-1] == 'm':
+            delta = timedelta(hours=int(precision[:-1]))
+
+        elif precision[-1] == 'd':
+            delta = timedelta(days=int(precision[:-1]))
+
+        elif precision[-1] == 'M':
+            delta = timedelta(days=int(precision[:-1]) * 30)
+
+        else:
+            raise ValueError(f'Interval: {precision}, not supported, only: (num)s, (num)m, (num)d, (num)M')
+        
+        return self.get_num_prices(symbol, date + delta, 1, precision)

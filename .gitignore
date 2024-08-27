@@ -1,3 +1,4 @@
 __pycache__/
 *.py[cod]
 venv/
+news/bezinga/scripts/output.json
