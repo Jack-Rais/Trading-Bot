@@ -1,11 +1,12 @@
+import keras
 import tensorflow as tf
 import numpy as np
 
 from transformers import AutoTokenizer
-from prices import PricesClient
-from news import GetNews
+from data.prices import PricesClient
+from data.news import GetNews
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class Observer:
@@ -34,49 +35,27 @@ class Observer:
         self.neutral = use_neutral
 
     
-    def get_news_obs(self, symbol:str, date:datetime):
-
-        def titles(x):
-
-            return tf.keras.preprocessing.sequence.pad_sequences(
-                            self.tokenizer(x, return_tensors='tf')['input_ids'],
-                            maxlen=100)[0]
-        
-        def paragraphs(x):
-
-            if x == []:
-
-                return tf.keras.preprocessing.sequence.pad_sequences(
-                            self.tokenizer([self.tokenizer.pad_token],
-                                return_tensors='tf')['input_ids'],
-                            maxlen=512)[0] 
-            
-            else:
-
-                return tf.keras.preprocessing.sequence.pad_sequences(
-                            self.tokenizer(x, 
-                                padding=True, 
-                                truncation=True,
-                                return_tensors='tf')['input_ids'],
-                            maxlen=512)[0] 
-                                        
+    def get_news_obs(self, symbol:str, date:datetime):                                      
 
         news = self.rest.get_symbols_by_num(symbol,
                                             self.news_limit,
                                             date,
-                                            titles, 
-                                            paragraphs
+                                            lambda x: keras.preprocessing.sequence.pad_sequences([self.tokenizer.encode(x)], 100)[0],
+                                            lambda x: keras.preprocessing.sequence.pad_sequences([self.tokenizer.encode(''.join(x), truncation = True)], 512)[0]
                                         )[symbol]
         
         return {
             'simbolo': np.array(tf.keras.preprocessing.sequence.pad_sequences(
-                            self.tokenizer(symbol, return_tensors='tf')['input_ids'],
-                            maxlen=5), dtype=np.int32),
+                            [self.tokenizer.encode(symbol)], 5), dtype=np.int32),
 
             'titolo': np.array(news['title'], np.int32),
 
             'paragrafi': np.array(news['paragraphs'], np.int32)
         }
+    
+    def get_next_date(self, symbol:str, date:datetime, precision:str = '1h') -> datetime:
+
+        return self.client.get_next_price(symbol, date, precision).index[0].to_pydatetime()
 
 
     def __call__(self, symbol:str, date:datetime):
@@ -86,8 +65,8 @@ class Observer:
 
         if self.training:
 
-            now = self.client.get_next_price(symbol, date, self.interval_prices)['open'][-1]
-            past = prices_part['open'][-1]
+            now = self.client.get_next_price(symbol, date, self.interval_prices)['open'].iloc[-1]
+            past = prices_part['open'].iloc[-1]
 
             if now > past:
 
@@ -99,13 +78,17 @@ class Observer:
             else:
                 label_part = np.array([[2]])
 
-            return {
-                'news': news_part,
-                'prices': prices_part,
+            out = {
+                'prices': prices_part.values,
                 'label': label_part
             }
+            out.update(news_part)
+
+            return out
         
-        return {
-                'news': news_part,
-                'prices': prices_part
+        out = {
+                'prices': prices_part.values
         }
+        out.update(news_part)
+        
+        return out

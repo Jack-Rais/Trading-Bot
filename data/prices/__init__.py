@@ -1,3 +1,6 @@
+import pandas as pd
+import pytz
+
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
@@ -242,7 +245,7 @@ class PricesClient:
         
         return df
     
-    def get_next_price(self, symbol:str, date:datetime, precision:str = '1h'):
+    def get_next_price(self, symbol:str, date:datetime, precision:str = '1h') -> pd.DataFrame:
 
         """
         A function to get the first market price after the "date" parameter
@@ -266,7 +269,7 @@ class PricesClient:
         """
 
         if precision[-1] == 'h':
-            delta = timedelta(hours=int(precision[:-1]))
+            delta = timedelta(hours=int(precision[:-1]) * 24)
         
         elif precision[-1] == 'm':
             delta = timedelta(hours=int(precision[:-1]))
@@ -279,5 +282,18 @@ class PricesClient:
 
         else:
             raise ValueError(f'Interval: {precision}, not supported, only: (num)s, (num)m, (num)d, (num)M')
-        
-        return self.get_num_prices(symbol, date + delta, 1, precision)
+
+        mydate = date
+
+        while True:
+
+            date += delta
+            data = self.get_data_prices(symbol, mydate, date, precision)
+
+            idx = data.index.searchsorted(mydate.replace(tzinfo=pytz.utc), side = 'right')
+            
+            if idx >= len(data):
+                continue 
+
+            new_date = data.index[idx]
+            return data.loc[new_date].to_frame().T

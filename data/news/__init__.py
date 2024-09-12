@@ -1,0 +1,1 @@
+from data.news.bezinga.scripts.scraper import GetNews
