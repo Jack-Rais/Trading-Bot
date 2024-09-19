@@ -40,7 +40,7 @@ class Observer:
         news = self.rest.get_symbols_by_num(symbol,
                                             self.news_limit,
                                             date,
-                                            lambda x: keras.preprocessing.sequence.pad_sequences([self.tokenizer.encode(x)], 100)[0],
+                                            lambda x: keras.preprocessing.sequence.pad_sequences([self.tokenizer.encode(x)], 50)[0],
                                             lambda x: keras.preprocessing.sequence.pad_sequences([self.tokenizer.encode(''.join(x), truncation = True)], 512)[0]
                                         )[symbol]
         
