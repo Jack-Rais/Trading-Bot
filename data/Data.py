@@ -7,6 +7,8 @@ import pytz
 from datetime import datetime, timedelta
 from data.Obseration import Observer
 
+from typing import Generator
+
 
 
 class GenerateDataset:
@@ -56,14 +58,9 @@ class GenerateDataset:
             self.date = self.start
 
 
-    def save_settings(self, symbol_try:str = 'AAPL'):
+    def save_settings(self, out):
 
         with open(self.settings_filepath, 'w') as file:
-
-            out = self.observer(
-                    symbol_try,
-                    self.date
-                )
             
             savable = dict()
             
@@ -88,19 +85,21 @@ class GenerateDataset:
             json.dump(savable, file, indent = 4)
 
 
-    def get_generator_dataset(self, symbol:str, times:int = 200):
-
-        if not os.path.exists(self.settings_filepath):
-            self.save_settings()
+    def get_generator_dataset(self, symbol:str, times:int = 200) -> Generator:
 
         for _ in range(times):
 
             self.update_date(symbol, self.date)
 
-            yield self.observer(
+            out = self.observer(
                     symbol,
                     self.date
                 )
+
+            if not os.path.exists(self.settings_filepath):
+                self.save_settings(out)
+
+            yield out
             
     def _create_example(self, data:tf.Tensor, chiave:str, dtype:str):
 
@@ -109,12 +108,12 @@ class GenerateDataset:
         if dtype.startswith('int'):
 
             data = tf.cast(data, tf.int64)
-            return {chiave: tf.train.Feature(int64_list = tf.train.Int64List(value = data))}
+            return tf.train.Feature(int64_list = tf.train.Int64List(value = data))
         
         elif dtype.startswith('float'):
 
             data = tf.cast(data, tf.float32)
-            return {chiave: tf.train.Feature(float_list = tf.train.FloatList(value = data))}
+            return tf.train.Feature(float_list = tf.train.FloatList(value = data))
         
         else:
             raise NotImplementedError(f'{dtype} non è supportato')
@@ -122,23 +121,30 @@ class GenerateDataset:
             
     def save_dataset_by_num(self, filepath:str | os.PathLike, symbol:str, times:int = 200):
 
-        if not os.path.exists(self.settings_filepath):
-            self.save_settings(symbol)
+        generator = self.get_generator_dataset(symbol, times)
+        generable = None
 
+        if not os.path.exists(self.settings_filepath):
+            out = next(generator)
+            self.save_settings(out)
+
+            generable = [out, *generator]
+
+        else:
+            generable = generator
+
+            
         with open(self.settings_filepath, 'r') as file:
             settings = json.load(file)
 
+           
         with tf.io.TFRecordWriter(filepath) as writer:
 
-            for data in self.get_generator_dataset(symbol, times):
+            for data in generable:
 
-                feature = dict()
-
-                for key, value in data.items():
-
-                    feature.update(self._create_example(value, key, settings[key]['dtype'])) 
+                feature = {key: self._create_example(value, key, settings[key]['dtype'])
+                       for key, value in data.items()}
                     
-
                 example = tf.train.Example(
                     features = tf.train.Features(
                         feature = feature

@@ -46,7 +46,7 @@ class Observer:
         
         return {
             'simbolo': np.array(tf.keras.preprocessing.sequence.pad_sequences(
-                            [self.tokenizer.encode(symbol)], 5), dtype=np.int32),
+                                [self.tokenizer.encode(symbol)], 5), dtype=np.int32),
 
             'titolo': np.array(news['title'], np.int32),
 
@@ -87,7 +87,7 @@ class Observer:
             return out
         
         out = {
-                'prices': prices_part.values
+            'prices': prices_part.values
         }
         out.update(news_part)
         
