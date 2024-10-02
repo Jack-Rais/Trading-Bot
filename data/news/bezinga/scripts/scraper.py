@@ -122,7 +122,8 @@ class GetNews:
         news = self.rest.get_news(symbol, 
                                   start=(date - delta).date(), 
                                   end=date.date(),
-                                  limit=limit)
+                                  limit=limit,
+                                  exclude_contentless = True)
 
 
         links = []
@@ -205,7 +206,8 @@ class GetNews:
                 symbol,
                 start = (date - delta).date(),
                 end = date.date(),
-                limit = nums
+                limit = nums,
+                exclude_contentless = True
             )
 
             if len(news) == nums:
