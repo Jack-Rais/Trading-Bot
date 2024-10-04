@@ -1,0 +1,37 @@
+{
+    "prices": {
+        "shape": [
+            50,
+            7
+        ],
+        "dtype": "float32"
+    },
+    "label": {
+        "shape": [
+            1,
+            1
+        ],
+        "dtype": "int64"
+    },
+    "simbolo": {
+        "shape": [
+            1,
+            5
+        ],
+        "dtype": "int64"
+    },
+    "titolo": {
+        "shape": [
+            30,
+            50
+        ],
+        "dtype": "int64"
+    },
+    "paragrafi": {
+        "shape": [
+            30,
+            512
+        ],
+        "dtype": "int64"
+    }
+}
