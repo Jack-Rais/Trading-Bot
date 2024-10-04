@@ -1,0 +1,25 @@
+{
+    "grandezza_vocabolario_titles": 30522,
+    "grandezza_vocabolario_paragraphs": 30522,
+
+    "depth_titles": 256,
+    "depth_paragraphs": 256,
+    "depth_prices": 256,
+    "numero_layers_titles": 5,
+    "numero_layers_paragraphs": 5,
+    "numero_layers_prices": 3,
+
+    "n_teste_titles": 8,
+    "n_teste_paragraphs": 8,
+    "grandezza_feed_titles": 256,
+    "grandezza_feed_paragraphs": 256,
+    "grandezza_feed_prices": 256,
+    "grandezza_last_feed": 512,
+
+    "type_enc_titles": "dot",
+    "type_enc_paragraphs": "dot",
+    "autocorrelation_factor": 2,
+    "kernel_size_prices": 25,
+    "dropout_titles": 0.2,
+    "dropout_paragraphs": 0.2
+}

@@ -193,6 +193,13 @@ class RetrieveDataset:
 
         return _map
     
+    def get_size(self):
+
+        counter = 0
+        for x in self.dataset.as_numpy_iterator():
+            counter += 1
+
+        return counter
 
     def get_dataset(self):
 

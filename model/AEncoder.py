@@ -218,11 +218,11 @@ class AutoformerEncoder(keras.layers.Layer):
 
     def call(self, x):
 
-        if tf.rank(x) == 2:
+        if x.ndim == 2:
 
             return self.model(tf.expand_dims(x, axis=0))
 
-        elif tf.rank(x) == 3:
+        elif x.ndim == 3:
             return self.model(x)
         
         else:

@@ -51,10 +51,7 @@ class NewsProcessing(keras.layers.Layer):
 
     def call(self, x):
 
-        if tf.rank(x[0]) != tf.rank(x[1]):
-            raise ValueError('Titles and Paragraphs ranks must be equal')
-
-        if tf.rank(x[0]) == 3:
+        if x[0].ndim == 3:
 
             titles = tf.map_fn(
                 self.TEncoder_titles,
@@ -72,7 +69,7 @@ class NewsProcessing(keras.layers.Layer):
             paragraphs = tf.reduce_mean(paragraphs, axis=1)
 
 
-        elif tf.rank(x[0]) == 2:
+        elif x[0].ndim == 2:
 
             titles = self.TEncoder_titles(x[0])
             paragraphs = self.TEncoder_paragraphs(x[1])
