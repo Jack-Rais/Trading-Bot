@@ -224,7 +224,7 @@ class PricesClient:
 
         else:
             raise ValueError(f'Interval: {interval}, not supported, only: (num)s, (num)m, (num)d, (num)M')
-
+        
         
         request = StockBarsRequest(
             symbol_or_symbols=[symbol],

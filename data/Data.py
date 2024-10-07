@@ -1,6 +1,8 @@
 import tensorflow as tf
 
 import json
+import inspect
+import pickle
 import os
 import pytz
 
@@ -9,6 +11,13 @@ from data.Obseration import Observer
 
 from typing import Generator
 
+def get_calling_file_directory():
+    
+    caller_frame = inspect.stack()[1]
+    caller_filename = caller_frame.filename
+    
+    caller_directory = os.path.dirname(os.path.abspath(caller_filename))
+    return caller_directory
 
 
 class GenerateDataset:
@@ -16,8 +25,8 @@ class GenerateDataset:
     def __init__(self, alpaca_api_key:str,
                        alpaca_secret_key:str,
 
-                       start: datetime,
                        end: datetime,
+                       start: datetime | None = None,
 
                        news_limit:int = 30,
                        price_limit: int = 50,
@@ -25,12 +34,19 @@ class GenerateDataset:
                        neutral:bool = False,
 
                        settings_filepath:str | None = None,
+                       use_first_date:bool = False,
+                       first_date_path:str = 'first_date_path.pkl',
                        ):
         
         self.start: datetime = start
+
+        if os.path.exists(os.path.join(get_calling_file_directory(), first_date_path)) and use_first_date:
+            with open(os.path.join(get_calling_file_directory(), first_date_path), 'rb') as file:
+                self.start = pickle.load(file)
+
         self.end: datetime = end
 
-        self.date: datetime = start
+        self.date: datetime = self.start
         self.interval_prices = interval_prices
 
         self.settings_filepath = settings_filepath or 'settings.json'
@@ -44,6 +60,8 @@ class GenerateDataset:
             True,
             neutral
         )
+
+        self.first_date_path = first_date_path
 
 
     def update_date(self, symbol:str, date:datetime):
@@ -101,7 +119,7 @@ class GenerateDataset:
 
             yield out
             
-    def _create_example(self, data:tf.Tensor, chiave:str, dtype:str):
+    def _create_example(self, data:tf.Tensor, dtype:str):
 
         data = tf.reshape(data, [-1])
 
@@ -119,7 +137,10 @@ class GenerateDataset:
             raise NotImplementedError(f'{dtype} non è supportato')
         
             
-    def save_dataset_by_num(self, filepath:str | os.PathLike, symbol:str, times:int = 200):
+    def save_dataset_by_num(self, filepath:str | os.PathLike, 
+                                  symbol:str, 
+                                  times:int = 200,
+                                  save_last_date: bool = True):
 
         generator = self.get_generator_dataset(symbol, times)
         generable = None
@@ -137,12 +158,13 @@ class GenerateDataset:
         with open(self.settings_filepath, 'r') as file:
             settings = json.load(file)
 
+        os.makedirs(os.path.dirname(filepath), exist_ok = True)
            
         with tf.io.TFRecordWriter(filepath) as writer:
 
             for data in generable:
 
-                feature = {key: self._create_example(value, key, settings[key]['dtype'])
+                feature = {key: self._create_example(value, settings[key]['dtype'])
                        for key, value in data.items()}
                     
                 example = tf.train.Example(
@@ -152,6 +174,15 @@ class GenerateDataset:
                 )
             
                 writer.write(example.SerializeToString())
+
+        if save_last_date:
+
+            path = os.path.join(get_calling_file_directory(), self.first_date_path) or \
+                os.path.join(get_calling_file_directory(), 'first_date_path.pkl')
+
+            with open(path, 'wb') as file:
+                pickle.dump(self.date, file)
+
 
 
 class RetrieveDataset:
@@ -196,7 +227,7 @@ class RetrieveDataset:
     def get_size(self):
 
         counter = 0
-        for x in self.dataset.as_numpy_iterator():
+        for _ in self.dataset.as_numpy_iterator():
             counter += 1
 
         return counter
