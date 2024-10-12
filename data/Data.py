@@ -31,6 +31,14 @@ class GenerateDataset:
                        news_limit:int = 30,
                        price_limit: int = 50,
                        interval_prices:str = '1h',
+                       training:bool = True,
+                       use_atr:bool = True,
+                       use_rsi:bool = True,
+                       use_macd:bool = True,
+                       use_obv:bool = True,
+                       lenght_atr:int = 14,
+                       lenght_rsi:int = 14,
+                       lenght_macd: tuple | str = 'standard',
                        neutral:bool = False,
 
                        settings_filepath:str | None = None,
@@ -58,6 +66,13 @@ class GenerateDataset:
             price_limit,
             interval_prices,
             True,
+            use_atr,
+            use_rsi,
+            use_macd,
+            use_obv,
+            lenght_atr,
+            lenght_rsi,
+            lenght_macd,
             neutral
         )
 
