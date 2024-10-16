@@ -2,7 +2,7 @@
     "prices": {
         "shape": [
             50,
-            7
+            12
         ],
         "dtype": "float32"
     },

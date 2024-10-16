@@ -117,6 +117,16 @@ class GenerateDataset:
 
             json.dump(savable, file, indent = 4)
 
+    
+    def save_date_by_num(self, num:int, symbol:str):
+
+        for _ in range(num):
+            self.update_date(symbol, self.date)
+
+        filepath = os.path.join(get_calling_file_directory(), self.first_date_path)
+        with open(filepath, 'wb') as file:
+            pickle.dump(self.date, file)
+
 
     def get_generator_dataset(self, symbol:str, times:int = 200) -> Generator:
 
