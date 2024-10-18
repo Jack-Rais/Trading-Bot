@@ -4,7 +4,7 @@ import keras
 import tensorflow as tf
 import pandas as pd
 
-from data import RetrieveDataset, GenerateDataset
+from data import RetrieveDataset
 from model import FinanceModel
 from model.utils import ModelCheckpoint
 
@@ -21,6 +21,7 @@ validation_split = 0.2
 batch_size = 1
 shuffle_buffer = 10
 
+steps_per_epoch = 100
 epochs = 1
 
 
@@ -60,14 +61,19 @@ checkpoint_callback = ModelCheckpoint(
     save_weights_only = True,
     save_best_only = True, 
     mode = 'min',
-    verbose = 1,
-    save_freq = 50 // batch_size
+    verbose = 1
 )
 
 history = model.fit(train_dataset, 
-                    epochs = epochs,
+                    epochs = epochs + checkpoint_callback.epoch,
                     validation_data = val_dataset, 
-                    callbacks = [checkpoint_callback])
+                    callbacks = [
+                        checkpoint_callback,
+                        keras.callbacks.TensorBoard()
+                    ],
+                    steps_per_epoch = steps_per_epoch,
+                    initial_epoch = checkpoint_callback.epoch
+                    )
 
 history_df = pd.DataFrame(history.history)
 history_df[['loss', 'val_loss']].plot()

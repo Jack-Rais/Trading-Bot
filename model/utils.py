@@ -23,12 +23,14 @@ class ModelCheckpoint(keras.callbacks.ModelCheckpoint):
                        mode:str = 'auto',
                        save_freq:str | int = 'epoch',
                        use_loss_file:bool = True,
-                       loss_file:str | os.PathLike = 'best_val_loss.pkl'):
+                       loss_file:str | os.PathLike = 'best_val_loss.pkl',
+                       epoch_file:str | os.PathLike = 'epoch_file.pkl'):
         
         if use_loss_file:
             self.loss_file = loss_file
 
             if os.path.exists(os.path.join(get_calling_file_directory(), loss_file)):
+
                 with open(os.path.join(get_calling_file_directory(), loss_file), 'rb') as file:
                     initial_value_threshold = pickle.load(file)
             else:
@@ -37,6 +39,18 @@ class ModelCheckpoint(keras.callbacks.ModelCheckpoint):
         else:
             self.loss_file = None
             initial_value_threshold = float('inf')
+
+        self.epoch_file = epoch_file
+        if os.path.exists(os.path.join(get_calling_file_directory(), epoch_file)):
+
+            with open(os.path.join(get_calling_file_directory(), epoch_file), 'rb') as file:
+                self.epoch = pickle.load(file)
+        else:
+            
+            self.epoch = 1
+            with open(os.path.join(get_calling_file_directory(), epoch_file), 'wb') as file:
+                pickle.dump(self.epoch, file)
+        
         
         super().__init__(
             filepath = filepath,
@@ -49,7 +63,7 @@ class ModelCheckpoint(keras.callbacks.ModelCheckpoint):
             initial_value_threshold = initial_value_threshold
         )
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs:dict = None):
         
         if self.loss_file:
             current_loss = logs.get(self.monitor)
@@ -57,6 +71,11 @@ class ModelCheckpoint(keras.callbacks.ModelCheckpoint):
             if current_loss is not None and current_loss < self.best:
                 with open(os.path.join(get_calling_file_directory(), self.loss_file), 'wb') as file:
                     pickle.dump(current_loss, file)
+
+        self.epoch += 1
+        with open(os.path.join(get_calling_file_directory(), self.epoch_file), 'wb') as file:
+            pickle.dump(self.epoch, file)
+
 
         super().on_epoch_end(epoch, logs)
 
