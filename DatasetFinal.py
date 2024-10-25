@@ -2,8 +2,8 @@ from data.Data import GenerateDataset
 from datetime import datetime
 import os
 
-API_KEY = 'PKPS66ILZGAOG7YTVGWB'
-API_SECRET = 'gJc3XcPHWsD3kEMjBDRMeoRIJpswshUnSAriAn4I'
+API_KEY = 'API_KEY'
+API_SECRET = 'SECRET_KEY'
 
 size_dataset = 100
 symbol = 'AAPL'
